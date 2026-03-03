@@ -1,0 +1,5 @@
+Dataset: UTS #39 confusables
+Version: 2025-08-16
+Upstream: https://unicode.org/Public/security/latest/confusables.txt
+License: Unicode-DFS-2016
+Generated artifact: uts39/2025-08-16/confusables.json.gz

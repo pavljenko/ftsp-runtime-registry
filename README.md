@@ -1,35 +1,48 @@
 # FTSP Runtime Registry
 
-Immutable runtime registry for FTSP on-demand runtime checks.
+Public immutable runtime registry for FTSP on-demand runtime checks.
 
 ## Goals
-- Pin runtime assets by version and SHA256.
-- Deliver only from GitHub Releases.
-- Block unpinned `latest/main` loading.
-- Keep permissive licenses only.
+- Deliver runtime assets from versioned GitHub Releases.
+- Keep a moving `stable` channel alias for FTSP clients.
+- Enforce SHA256 + signed manifest (`ed25519`, fallback `sha256-sidecar`).
+- Allow only permissive licenses.
 
 ## Layout
-- `manifests/runtime-sources.json` - single source of truth for assets/versions.
-- `manifests/runtime-index.stable.json` - stable channel manifest for FTSP.
-- `manifests/runtime-index.candidate.json` - candidate channel manifest.
-- `manifests/runtime-index.json` - alias to stable manifest.
-- `manifests/runtime-index.sig` - detached SHA256 sidecar for stable manifest.
-- `engines/*/<version>/...` - release artifacts staging.
-- `licenses/NOTICE-*.txt` - per-engine notices.
-- `.github/workflows/` - update and license gates.
+- `manifests/runtime-sources.json` - source of truth for versions/assets.
+- `engines/*/<version>/...` - built/copied runtime WASM assets.
+- `uts39/<version>/confusables.json.gz` - generated UTS #39 dataset.
+- `manifests/runtime-index.{stable,candidate}.json` - channel manifests.
+- `manifests/runtime-index*.sig` - detached signature/sha sidecars.
+- `licenses/NOTICE-*.txt` - license notices.
 
-## Channels
-- `stable` for FTSP production.
-- `candidate` for pre-release validation.
+## Runtime channels
+- `stable` - FTSP production channel (`releases/download/stable/...`).
+- `candidate` - pre-release validation.
 
 ## Local commands
+- Check upstream tags: `node scripts/check_upstream_versions.mjs manifests/runtime-sources.json`
+- Set release tag: `node scripts/set_release_tag.mjs manifests/runtime-sources.json`
+- Build assets: `node scripts/build_engine_assets.mjs manifests/runtime-sources.json`
+  strict CI mode: `node scripts/build_engine_assets.mjs manifests/runtime-sources.json --strict-fetch`
 - Build manifests: `node scripts/build_runtime_index.mjs --channels stable,candidate`
-- Validate manifest schema/pinning: `node scripts/validate_manifest.mjs manifests/runtime-index.stable.json`
+- Validate manifests: `node scripts/validate_manifest.mjs manifests/runtime-index.stable.json`
 - License gate: `node scripts/license_gate.mjs manifests`
-- Upstream tags scan: `node scripts/check_upstream_versions.mjs manifests/runtime-sources.json`
-- Create GitHub repo via API: `GITHUB_TOKEN=... ./scripts/create_remote_repo.sh pavljenko ftsp-runtime-registry public`
+- Runtime smoke gate: `node scripts/runtime_smoke_gate.mjs`
+- Collect release files: `node scripts/collect_release_assets.mjs dist`
+
+## CI requirements
+Set repository secret:
+- `FTSP_RUNTIME_SIGNING_PRIVATE_KEY_B64` - ed25519 private key in PKCS8 DER (base64).
+Generate keypair once:
+- `node scripts/generate_signing_keypair.mjs`
+- put `privateKeyPkcs8Base64` into the GitHub secret above
+- keep `publicKeySpkiBase64` synced with FTSP constant `RUNTIME_REGISTRY_ED25519_PUBLIC_KEY_BASE64`
+- current public key is stored in `manifests/signing-public-key.ed25519.spki.b64`
+
+If the key is missing, manifests are built with `sha256-sidecar` fallback.
 
 ## Notes
-- Current engine binaries are placeholders for integration wiring.
-- Replace placeholder artifacts with real WASM builds before production use.
-- `publish-release.yml` uploads all runtime assets and manifests to GitHub Releases on tag push (`v*`).
+- Runtime assets are fetched/generate-only in CI (`build_engine_assets.mjs`).
+- `publish-release.yml` publishes both versioned tag release and `stable` alias release.
+- `runtime-update.yml` auto-opens and auto-merges PRs only after validation, license, and smoke gates.
