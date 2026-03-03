@@ -1,20 +1,4 @@
 {
-  "checkedAt": "2026-03-03T02:40:52.967Z",
-  "updates": [
-    {
-      "kind": "engine:harfbuzz",
-      "current": "8.5.0",
-      "latest": "12.3.2"
-    },
-    {
-      "kind": "engine:freetypeVm",
-      "current": "VER-2-13-2",
-      "latest": "VER-2-14-2"
-    },
-    {
-      "kind": "engine:geometry",
-      "current": "chrome/m136",
-      "latest": "chrome/m39_2138"
-    }
-  ]
+  "checkedAt": "2026-03-03T03:35:08.699Z",
+  "updates": []
 }

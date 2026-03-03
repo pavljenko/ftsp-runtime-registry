@@ -5,6 +5,8 @@ on:
   push:
     tags:
       - 'v*'
+    branches:
+      - 'main'
 
 jobs:
   publish:
@@ -17,43 +19,54 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Resolve release tag
+        id: meta
+        run: |
+          TAG=$(node -e "const fs=require('fs');const s=JSON.parse(fs.readFileSync('manifests/runtime-sources.json','utf8'));process.stdout.write(String(s.releaseTag||''));")
+          if [ -z "$TAG" ]; then
+            echo "releaseTag is empty" >&2
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Build runtime assets
+        run: node scripts/build_engine_assets.mjs manifests/runtime-sources.json --strict-fetch
+
       - name: Build manifests
         run: node scripts/build_runtime_index.mjs --channels stable,candidate
+        env:
+          FTSP_RUNTIME_SIGNING_PRIVATE_KEY_B64: ${{ secrets.FTSP_RUNTIME_SIGNING_PRIVATE_KEY_B64 }}
 
       - name: Validate manifests
         run: |
           node scripts/validate_manifest.mjs manifests/runtime-index.stable.json
           node scripts/validate_manifest.mjs manifests/runtime-index.candidate.json
           node scripts/license_gate.mjs manifests
+          node scripts/runtime_smoke_gate.mjs
 
       - name: Collect release assets
         run: |
-          mkdir -p dist
-          cp engines/harfbuzz/0.0.0-placeholder/harfbuzz.wasm dist/harfbuzz.wasm
-          cp engines/freetype-vm/0.0.0-placeholder/freetype_vm.wasm dist/freetype_vm.wasm
-          cp engines/geometry/0.0.0-placeholder/geometry.wasm dist/geometry.wasm
-          cp uts39/0.0.0-placeholder/confusables.json.gz dist/confusables.json.gz
-          cp manifests/runtime-index.json dist/runtime-index.json
-          cp manifests/runtime-index.sig dist/runtime-index.sig
-          cp manifests/runtime-index.stable.json dist/runtime-index.stable.json
-          cp manifests/runtime-index.stable.sig dist/runtime-index.stable.sig
-          cp manifests/runtime-index.candidate.json dist/runtime-index.candidate.json
-          cp manifests/runtime-index.candidate.sig dist/runtime-index.candidate.sig
+          rm -rf dist
+          node scripts/collect_release_assets.mjs dist
 
-      - name: Create/Update release
+      - name: Publish versioned release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.meta.outputs.tag }}
           files: |
-            dist/harfbuzz.wasm
-            dist/freetype_vm.wasm
-            dist/geometry.wasm
-            dist/confusables.json.gz
-            dist/runtime-index.json
-            dist/runtime-index.sig
-            dist/runtime-index.stable.json
-            dist/runtime-index.stable.sig
-            dist/runtime-index.candidate.json
-            dist/runtime-index.candidate.sig
+            dist/*
           fail_on_unmatched_files: true
           draft: false
           prerelease: false
+
+      - name: Publish stable channel alias
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: stable
+          name: Runtime Stable Channel
+          files: |
+            dist/*
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
+          make_latest: false

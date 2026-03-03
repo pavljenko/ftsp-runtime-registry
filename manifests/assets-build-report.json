@@ -1,0 +1,32 @@
+{
+  "builtAt": "2026-03-03T03:42:03.251Z",
+  "engines": {
+    "harfbuzz": {
+      "file": "engines/harfbuzz/0.4.13/harfbuzz.wasm",
+      "bytes": 371910,
+      "source": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.4.13/hb.wasm",
+      "reused": false
+    },
+    "freetypeVm": {
+      "file": "engines/freetype-vm/0.0.4/freetype_vm.wasm",
+      "bytes": 998254,
+      "source": "https://cdn.jsdelivr.net/npm/freetype-wasm@0.0.4/dist/freetype.wasm",
+      "reused": false
+    },
+    "geometry": {
+      "file": "engines/geometry/1.0.0/geometry.wasm",
+      "bytes": 324290,
+      "source": "https://cdn.jsdelivr.net/npm/pathkit-wasm@1.0.0/bin/pathkit.wasm",
+      "reused": false
+    }
+  },
+  "datasets": {
+    "uts39": {
+      "file": "uts39/2026-03-03/confusables.json.gz",
+      "bytes": 45595,
+      "source": "https://unicode.org/Public/security/latest/confusables.txt",
+      "pairs": 4462,
+      "reused": false
+    }
+  }
+}

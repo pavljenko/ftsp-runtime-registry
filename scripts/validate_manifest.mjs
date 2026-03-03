@@ -27,6 +27,25 @@ function validateEntry(kind, row){
   if(!ALLOWED_LICENSES.has(String(row.license || ''))) fail(`${kind}: disallowed license ${String(row.license || '')}`);
 }
 
+function validateSignature(signature){
+  if(!signature || typeof signature !== 'object') fail('missing signature object');
+  const alg = String(signature.alg || '').trim().toLowerCase();
+  const keyId = String(signature.keyId || '').trim();
+  const value = String(signature.value || '').trim();
+  const payloadHash = String(signature.signedPayloadSha256 || '').trim().toLowerCase();
+  if(!alg) fail('signature.alg is required');
+  if(!keyId) fail('signature.keyId is required');
+  if(!/^[a-f0-9]{64}$/.test(payloadHash)) fail('signature.signedPayloadSha256 must be sha256 hex');
+  if(alg === 'ed25519'){
+    if(!/^[A-Za-z0-9+/=]+$/.test(value)) fail('signature.value must be base64 for ed25519');
+    return;
+  }
+  if(alg === 'sha256-sidecar'){
+    return;
+  }
+  fail(`unsupported signature.alg ${alg}`);
+}
+
 const manifestPath = process.argv[2] || 'manifests/runtime-index.json';
 const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
 if(!String(manifest.version || '').trim()) fail('missing version');
@@ -36,6 +55,5 @@ if(!String(manifest.generatedAt || '').trim()) fail('missing generatedAt');
 for(const [k, v] of Object.entries(manifest.engines || {})) validateEntry(`engine:${k}`, v);
 for(const [k, v] of Object.entries(manifest.datasets || {})) validateEntry(`dataset:${k}`, v);
 
-const sig = manifest.signature && typeof manifest.signature === 'object' ? manifest.signature : null;
-if(!sig || !String(sig.value || '').trim()) fail('missing signature.value');
+validateSignature(manifest.signature);
 console.log(`Manifest validation passed: ${manifestPath}`);
