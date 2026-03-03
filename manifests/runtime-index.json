@@ -1,0 +1,70 @@
+{
+  "version": "2026.03.03.1",
+  "channel": "stable",
+  "generatedAt": "2026-03-03T02:46:46.617Z",
+  "signature": {
+    "alg": "sha256-sidecar",
+    "keyId": "manifest_sha256",
+    "value": "8af0c6179de9c0b590969032ccd54738a2f526ca5785a95e74829424daa22bd9"
+  },
+  "engines": {
+    "harfbuzz": {
+      "version": "0.0.0-placeholder",
+      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.03.1/harfbuzz.wasm",
+      "sha256": "93a44bbb96c751218e4c00d479e4c14358122a389acca16205b1e4d0dc5f9476",
+      "exports": [
+        "shape"
+      ],
+      "license": "MIT",
+      "upstream": {
+        "repo": "https://github.com/harfbuzz/harfbuzz",
+        "tag": "8.5.0",
+        "latestSeen": "12.3.2",
+        "checkedAt": "2026-03-03T02:40:52.967Z"
+      }
+    },
+    "freetypeVm": {
+      "version": "0.0.0-placeholder",
+      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.03.1/freetype_vm.wasm",
+      "sha256": "93a44bbb96c751218e4c00d479e4c14358122a389acca16205b1e4d0dc5f9476",
+      "exports": [
+        "run_vm"
+      ],
+      "license": "FTL",
+      "upstream": {
+        "repo": "https://github.com/freetype/freetype",
+        "tag": "VER-2-13-2",
+        "latestSeen": "VER-2-14-2",
+        "checkedAt": "2026-03-03T02:40:52.967Z"
+      }
+    },
+    "geometry": {
+      "version": "0.0.0-placeholder",
+      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.03.1/geometry.wasm",
+      "sha256": "93a44bbb96c751218e4c00d479e4c14358122a389acca16205b1e4d0dc5f9476",
+      "exports": [
+        "analyze_geometry"
+      ],
+      "license": "BSD-3-Clause",
+      "upstream": {
+        "repo": "https://github.com/google/skia",
+        "tag": "chrome/m136",
+        "latestSeen": "chrome/m39_2138",
+        "checkedAt": "2026-03-03T02:40:52.967Z"
+      }
+    }
+  },
+  "datasets": {
+    "uts39": {
+      "version": "0.0.0-placeholder",
+      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.03.1/confusables.json.gz",
+      "sha256": "4a93ce7f95a919a47d84516ff21981ea950768674a4ad6b16d349d5afb967d12",
+      "exports": [],
+      "license": "Unicode-DFS-2016",
+      "upstream": {
+        "repo": "https://www.unicode.org/reports/tr39/",
+        "checkedAt": "2026-03-03T02:40:52.967Z"
+      }
+    }
+  }
+}

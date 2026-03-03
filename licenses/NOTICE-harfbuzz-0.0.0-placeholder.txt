@@ -1,0 +1,4 @@
+Harfbuzz placeholder runtime artifact for FTSP wiring tests.
+Upstream project: https://github.com/harfbuzz/harfbuzz
+Declared license: MIT
+This placeholder file is not the real HarfBuzz build.

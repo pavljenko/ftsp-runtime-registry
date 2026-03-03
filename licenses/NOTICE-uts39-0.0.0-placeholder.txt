@@ -1,0 +1,4 @@
+UTS #39 confusables placeholder dataset for FTSP wiring tests.
+Upstream source: https://www.unicode.org/reports/tr39/
+Declared license: Unicode-DFS-2016
+This placeholder file is not the complete UTS #39 dataset.

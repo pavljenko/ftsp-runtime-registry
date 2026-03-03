@@ -1,0 +1,59 @@
+name: Publish Runtime Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build manifests
+        run: node scripts/build_runtime_index.mjs --channels stable,candidate
+
+      - name: Validate manifests
+        run: |
+          node scripts/validate_manifest.mjs manifests/runtime-index.stable.json
+          node scripts/validate_manifest.mjs manifests/runtime-index.candidate.json
+          node scripts/license_gate.mjs manifests
+
+      - name: Collect release assets
+        run: |
+          mkdir -p dist
+          cp engines/harfbuzz/0.0.0-placeholder/harfbuzz.wasm dist/harfbuzz.wasm
+          cp engines/freetype-vm/0.0.0-placeholder/freetype_vm.wasm dist/freetype_vm.wasm
+          cp engines/geometry/0.0.0-placeholder/geometry.wasm dist/geometry.wasm
+          cp uts39/0.0.0-placeholder/confusables.json.gz dist/confusables.json.gz
+          cp manifests/runtime-index.json dist/runtime-index.json
+          cp manifests/runtime-index.sig dist/runtime-index.sig
+          cp manifests/runtime-index.stable.json dist/runtime-index.stable.json
+          cp manifests/runtime-index.stable.sig dist/runtime-index.stable.sig
+          cp manifests/runtime-index.candidate.json dist/runtime-index.candidate.json
+          cp manifests/runtime-index.candidate.sig dist/runtime-index.candidate.sig
+
+      - name: Create/Update release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/harfbuzz.wasm
+            dist/freetype_vm.wasm
+            dist/geometry.wasm
+            dist/confusables.json.gz
+            dist/runtime-index.json
+            dist/runtime-index.sig
+            dist/runtime-index.stable.json
+            dist/runtime-index.stable.sig
+            dist/runtime-index.candidate.json
+            dist/runtime-index.candidate.sig
+          fail_on_unmatched_files: true
+          draft: false
+          prerelease: false
