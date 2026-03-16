@@ -1,11 +1,28 @@
 #!/usr/bin/env node
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 async function fetchJson(url){
   const res = await fetch(url, { headers: { 'User-Agent': 'ftsp-runtime-registry-bot' } });
   if(!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   return await res.json();
+}
+
+async function fetchText(url){
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'ftsp-runtime-registry-bot',
+      'Accept': 'text/plain,application/json,*/*'
+    }
+  });
+  if(!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  return await res.text();
+}
+
+function sha256Hex(value){
+  return crypto.createHash('sha256').update(value).digest('hex');
 }
 
 function parseGitHubRepo(url){
@@ -32,6 +49,16 @@ function rewriteRemoteUrlVersion(url, oldVersion, newVersion){
   const re = new RegExp(`@${oldEsc}/`);
   if(re.test(src)) return src.replace(re, `@${newVersion}/`);
   return src;
+}
+
+function rewriteVersionedPath(filePath, nextVersion){
+  const src = String(filePath || '').replace(/\\/g, '/').trim();
+  if(!src) return src;
+  const parsed = path.posix.parse(src);
+  const dir = parsed.dir.split('/');
+  if(dir.length < 2) return src;
+  dir[dir.length - 1] = nextVersion;
+  return path.posix.join(dir.join('/'), parsed.base);
 }
 
 async function latestTagFromRepo(repoUrl, currentTag){
@@ -115,62 +142,182 @@ function maybeUpdateRuntimeRow(row, latestTag){
 
   row.version = nextVersion;
   if(row.file){
-    const oldFile = String(row.file);
-    const parsed = path.posix.parse(oldFile.replace(/\\/g, '/'));
-    const dir = parsed.dir.split('/');
-    if(dir.length >= 2){
-      dir[dir.length - 1] = nextVersion;
-      row.file = path.posix.join(dir.join('/'), parsed.base);
+    row.file = rewriteVersionedPath(row.file, nextVersion);
+  }
+  if(row.wrapperFile){
+    row.wrapperFile = rewriteVersionedPath(row.wrapperFile, nextVersion);
+  }
+  if(row.source && row.source.type === 'remote-url'){
+    if(row.source.url){
+      row.source.url = rewriteRemoteUrlVersion(String(row.source.url), currentVersion, nextVersion);
+    }
+    if(row.source.wrapperUrl){
+      row.source.wrapperUrl = rewriteRemoteUrlVersion(String(row.source.wrapperUrl), currentVersion, nextVersion);
+    }
+    if(row.source.jsUrl){
+      row.source.jsUrl = rewriteRemoteUrlVersion(String(row.source.jsUrl), currentVersion, nextVersion);
     }
   }
-  if(row.source && row.source.type === 'remote-url' && row.source.url){
-    row.source.url = rewriteRemoteUrlVersion(String(row.source.url), currentVersion, nextVersion);
+  return true;
+}
+
+function parseHexCodepoint(token){
+  const t = String(token || '').trim().toUpperCase();
+  if(!/^[0-9A-F]{2,6}$/.test(t)) return null;
+  const cp = Number.parseInt(t, 16);
+  if(!Number.isFinite(cp) || cp <= 0 || cp > 0x10FFFF) return null;
+  return cp;
+}
+
+function parseUts39Pairs(rawText){
+  const pairs = [];
+  const lines = String(rawText || '').split(/\r?\n/);
+  for(const line of lines){
+    const body = String(line || '').replace(/#.*/, '').trim();
+    if(!body) continue;
+    const cols = body.split(';').map(v => v.trim());
+    if(cols.length < 2) continue;
+    const srcTokens = cols[0].split(/\s+/).filter(Boolean);
+    const dstTokens = cols[1].split(/\s+/).filter(Boolean);
+    if(srcTokens.length !== 1 || dstTokens.length !== 1) continue;
+    const source = parseHexCodepoint(srcTokens[0]);
+    const target = parseHexCodepoint(dstTokens[0]);
+    if(!source || !target) continue;
+    pairs.push({
+      source,
+      target,
+      class: 'moderate',
+      label: `U+${source.toString(16).toUpperCase()}~U+${target.toString(16).toUpperCase()}`
+    });
+  }
+  return pairs;
+}
+
+function normalizeUts39Pairs(pairs){
+  return (Array.isArray(pairs) ? pairs : [])
+    .map((row) => ({
+      source: Number(row && row.source || 0),
+      target: Number(row && row.target || 0),
+      class: String(row && row.class || 'moderate'),
+      label: String(row && row.label || '')
+    }))
+    .filter((row) => row.source > 0 && row.target > 0)
+    .sort((a, b) => (
+      a.source - b.source ||
+      a.target - b.target ||
+      a.class.localeCompare(b.class) ||
+      a.label.localeCompare(b.label)
+    ));
+}
+
+function computeUts39ContentSha(pairs){
+  const normalized = normalizeUts39Pairs(pairs);
+  return sha256Hex(Buffer.from(JSON.stringify(normalized) + '\n', 'utf8'));
+}
+
+function readExistingUts39DatasetFingerprint(filePath){
+  try{
+    if(!fs.existsSync(filePath)) return { contentSha256: '', sourceSha256: '' };
+    const gz = fs.readFileSync(filePath);
+    const text = zlib.gunzipSync(gz).toString('utf8');
+    const parsed = JSON.parse(text);
+    return {
+      contentSha256: computeUts39ContentSha(parsed && parsed.pairs),
+      sourceSha256: String(parsed && parsed.sourceSha256 || '').trim().toLowerCase()
+    };
+  }catch(_e){
+    return { contentSha256: '', sourceSha256: '' };
+  }
+}
+
+function buildUts39Version(isoNow, contentSha256){
+  const day = String(isoNow || '').slice(0, 10) || 'uts39';
+  const shortHash = String(contentSha256 || '').trim().toLowerCase().slice(0, 12);
+  return shortHash ? `${day}-${shortHash}` : day;
+}
+
+function maybeUpdateUts39Row(row, nextVersion){
+  if(!row || typeof row !== 'object') return false;
+  const currentVersion = String(row.version || '').trim();
+  if(!nextVersion || nextVersion === currentVersion) return false;
+  row.version = nextVersion;
+  if(row.file){
+    row.file = rewriteVersionedPath(row.file, nextVersion);
   }
   return true;
+}
+
+function writeJson(filePath, value){
+  fs.writeFileSync(filePath, JSON.stringify(value, null, 2) + '\n', 'utf8');
 }
 
 async function main(){
   const srcPath = process.argv[2] || 'manifests/runtime-sources.json';
   const sources = JSON.parse(fs.readFileSync(srcPath, 'utf8'));
   const now = new Date().toISOString();
-
-  const report = { checkedAt: now, updates: [] };
+  const report = { updates: [] };
 
   for(const [kind, row] of Object.entries(sources.engines || {})){
     const upstream = row && row.upstream ? row.upstream : {};
-    const currentTag = String(upstream.tag || '');
+    const currentTag = String(upstream.tag || '').trim();
     const latest = await latestTagFromRepo(upstream.repo, currentTag);
     const shouldUpdateVersion = row && row.autoUpdateVersion !== false;
-    const changedVersion = (latest && shouldUpdateVersion) ? maybeUpdateRuntimeRow(row, latest) : false;
-    row.upstream = Object.assign({}, upstream, {
-      latestSeen: latest || String(upstream.latestSeen || ''),
-      checkedAt: now,
-      tag: String(currentTag || latest || '')
-    });
-    if(latest && currentTag && latest !== currentTag){
-      report.updates.push({ kind: `engine:${kind}`, current: currentTag, latest, versionChanged: changedVersion });
+    const updateAvailable = !!(latest && currentTag && latest !== currentTag);
+    if(updateAvailable && shouldUpdateVersion && maybeUpdateRuntimeRow(row, latest)){
+      row.upstream = Object.assign({}, upstream, {
+        tag: latest,
+        latestSeen: latest,
+        checkedAt: now
+      });
+      report.updates.push({
+        kind: `engine:${kind}`,
+        current: currentTag,
+        latest,
+        versionChanged: true
+      });
+    }else if(updateAvailable && !shouldUpdateVersion){
+      console.log(`Pinned engine update available: engine:${kind} ${currentTag} -> ${latest}`);
     }
   }
 
   for(const [kind, row] of Object.entries(sources.datasets || {})){
-    const upstream = row && row.upstream ? row.upstream : {};
-    row.upstream = Object.assign({}, upstream, { checkedAt: now });
-    if(String(row && row.source && row.source.type || '') === 'uts39-generate'){
-      row.version = now.slice(0, 10);
-      if(row.file){
-        const parsed = path.posix.parse(String(row.file).replace(/\\/g, '/'));
-        const dir = parsed.dir.split('/');
-        if(dir.length >= 2){
-          dir[dir.length - 1] = row.version;
-          row.file = path.posix.join(dir.join('/'), parsed.base);
-        }
-      }
+    if(String(row && row.source && row.source.type || '') !== 'uts39-generate'){
+      continue;
     }
-    void kind;
+    const upstream = row && row.upstream ? row.upstream : {};
+    const url = String(row && row.source && row.source.url || '').trim();
+    if(!url) continue;
+
+    try{
+      const raw = await fetchText(url);
+      const pairs = parseUts39Pairs(raw);
+      const nextContentSha = computeUts39ContentSha(pairs);
+      const existing = readExistingUts39DatasetFingerprint(path.resolve(process.cwd(), String(row.file || '')));
+      const currentContentSha = String(upstream.contentSha256 || existing.contentSha256 || '').trim().toLowerCase();
+      if(nextContentSha && nextContentSha !== currentContentSha){
+        const previousVersion = String(row.version || '').trim();
+        const nextVersion = buildUts39Version(now, nextContentSha);
+        const versionChanged = maybeUpdateUts39Row(row, nextVersion);
+        row.upstream = Object.assign({}, upstream, {
+          contentSha256: nextContentSha,
+          sourceSha256: sha256Hex(Buffer.from(raw, 'utf8')),
+          sourceUrl: url,
+          checkedAt: now
+        });
+        report.updates.push({
+          kind: `dataset:${kind}`,
+          current: currentContentSha || previousVersion,
+          latest: nextContentSha,
+          versionChanged
+        });
+      }
+    }catch(err){
+      console.warn(`Skipped dataset:${kind} upstream check: ${String(err && err.message || err)}`);
+    }
   }
 
-  fs.writeFileSync(srcPath, JSON.stringify(sources, null, 2) + '\n', 'utf8');
-  fs.writeFileSync('manifests/upstream-status.json', JSON.stringify(report, null, 2) + '\n', 'utf8');
+  writeJson(srcPath, sources);
+  writeJson('manifests/upstream-status.json', report);
 
   if(report.updates.length){
     console.log('Upstream updates detected:');

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
@@ -7,6 +8,10 @@ const STRICT_FETCH = process.argv.includes('--strict-fetch');
 
 function readJson(filePath){
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function sha256Hex(value){
+  return crypto.createHash('sha256').update(value).digest('hex');
 }
 
 function ensureDir(filePath){
@@ -48,6 +53,22 @@ function validateWasm(filePath){
   }
 }
 
+function validateJsWrapper(filePath){
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const text = String(raw || '');
+  if(text.trim().length < 128){
+    throw new Error(`${filePath}: wrapper is too small`);
+  }
+  const looksLikeModule =
+    text.indexOf('export default') !== -1 ||
+    text.indexOf('module.exports') !== -1 ||
+    text.indexOf('PathKitInit') !== -1 ||
+    text.indexOf('function') !== -1;
+  if(!looksLikeModule){
+    throw new Error(`${filePath}: wrapper does not look like a JS module`);
+  }
+}
+
 function parseHexCodepoint(token){
   const t = String(token || '').trim().toUpperCase();
   if(!/^[0-9A-F]{2,6}$/.test(t)) return null;
@@ -80,6 +101,38 @@ function parseUts39Pairs(rawText){
   return pairs;
 }
 
+function normalizeUts39Pairs(pairs){
+  return (Array.isArray(pairs) ? pairs : [])
+    .map((row) => ({
+      source: Number(row && row.source || 0),
+      target: Number(row && row.target || 0),
+      class: String(row && row.class || 'moderate'),
+      label: String(row && row.label || '')
+    }))
+    .filter((row) => row.source > 0 && row.target > 0)
+    .sort((a, b) => (
+      a.source - b.source ||
+      a.target - b.target ||
+      a.class.localeCompare(b.class) ||
+      a.label.localeCompare(b.label)
+    ));
+}
+
+function computeUts39ContentSha(pairs){
+  return sha256Hex(Buffer.from(JSON.stringify(normalizeUts39Pairs(pairs)) + '\n', 'utf8'));
+}
+
+function readExistingUts39Payload(filePath){
+  if(!fs.existsSync(filePath)) return null;
+  try{
+    const gz = fs.readFileSync(filePath);
+    const text = zlib.gunzipSync(gz).toString('utf8');
+    return JSON.parse(text);
+  }catch(_e){
+    return null;
+  }
+}
+
 async function buildRemoteAsset(row, kindLabel){
   const src = row && row.source ? row.source : {};
   const file = String(row && row.file || '').trim();
@@ -92,7 +145,7 @@ async function buildRemoteAsset(row, kindLabel){
     const bytes = await fetchBuffer(url);
     fs.writeFileSync(abs, bytes);
     validateWasm(abs);
-    return { file, bytes: bytes.length, source: url, reused: false };
+    return { file, bytes: bytes.length, source: url, sha256: sha256Hex(bytes) };
   }catch(err){
     if(!STRICT_FETCH && fs.existsSync(abs)){
       validateWasm(abs);
@@ -101,8 +154,41 @@ async function buildRemoteAsset(row, kindLabel){
         file,
         bytes: existing.length,
         source: url,
-        reused: true,
-        note: `fetch failed, reused local asset: ${String(err && err.message || err)}`
+        sha256: sha256Hex(existing)
+      };
+    }
+    throw err;
+  }
+}
+
+async function buildWrapperAsset(row, kindLabel){
+  const src = row && row.source ? row.source : {};
+  const file = String(row && row.wrapperFile || '').trim();
+  const url = String(src && (src.wrapperUrl || src.jsUrl) || '').trim();
+  if(!file || !url){
+    return null;
+  }
+  const abs = path.resolve(process.cwd(), file);
+  ensureDir(abs);
+  try{
+    const text = await fetchText(url);
+    fs.writeFileSync(abs, text, 'utf8');
+    validateJsWrapper(abs);
+    return {
+      file,
+      bytes: Buffer.byteLength(text, 'utf8'),
+      source: url,
+      sha256: sha256Hex(Buffer.from(text, 'utf8'))
+    };
+  }catch(err){
+    if(!STRICT_FETCH && fs.existsSync(abs)){
+      validateJsWrapper(abs);
+      const existing = fs.readFileSync(abs, 'utf8');
+      return {
+        file,
+        bytes: Buffer.byteLength(existing, 'utf8'),
+        source: url,
+        sha256: sha256Hex(Buffer.from(existing, 'utf8'))
       };
     }
     throw err;
@@ -120,25 +206,39 @@ async function buildUts39Dataset(row, kindLabel){
   try{
     const raw = await fetchText(url);
     const pairs = parseUts39Pairs(raw);
+    const sourceSha256 = sha256Hex(Buffer.from(raw, 'utf8'));
+    const contentSha256 = computeUts39ContentSha(pairs);
     const payload = {
       version: String(row && row.version || ''),
-      generatedAt: new Date().toISOString(),
       source: url,
+      sourceSha256,
+      contentSha256,
       pairs
     };
     const json = Buffer.from(JSON.stringify(payload, null, 2) + '\n', 'utf8');
-    const gz = zlib.gzipSync(json, { level: 9 });
+    const gz = zlib.gzipSync(json, { level: 9, mtime: 0 });
     fs.writeFileSync(abs, gz);
-    return { file, bytes: gz.length, source: url, pairs: pairs.length, reused: false };
+    return {
+      file,
+      bytes: gz.length,
+      source: url,
+      sourceSha256,
+      contentSha256,
+      sha256: sha256Hex(gz),
+      pairs: pairs.length
+    };
   }catch(err){
     if(!STRICT_FETCH && fs.existsSync(abs)){
       const existing = fs.readFileSync(abs);
+      const parsed = readExistingUts39Payload(abs);
       return {
         file,
         bytes: existing.length,
         source: url,
-        reused: true,
-        note: `fetch failed, reused local dataset: ${String(err && err.message || err)}`
+        sourceSha256: String(parsed && parsed.sourceSha256 || ''),
+        contentSha256: String(parsed && parsed.contentSha256 || ''),
+        sha256: sha256Hex(existing),
+        pairs: Array.isArray(parsed && parsed.pairs) ? parsed.pairs.length : 0
       };
     }
     throw err;
@@ -149,7 +249,7 @@ async function main(){
   const srcPath = process.argv[2] || 'manifests/runtime-sources.json';
   const src = readJson(srcPath);
   const report = {
-    builtAt: new Date().toISOString(),
+    schema: 'ftsp-runtime-assets-report-v2',
     engines: {},
     datasets: {}
   };
@@ -158,6 +258,10 @@ async function main(){
     const type = String(row && row.source && row.source.type || '').trim();
     if(type === 'remote-url'){
       report.engines[kind] = await buildRemoteAsset(row, `engine:${kind}`);
+      const wrapper = await buildWrapperAsset(row, `engine:${kind}`);
+      if(wrapper){
+        report.engines[kind].wrapper = wrapper;
+      }
     }else{
       throw new Error(`engine:${kind}: unsupported source.type '${type}'`);
     }

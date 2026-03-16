@@ -10,58 +10,65 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
 
       - name: Check upstream tags
         run: node scripts/check_upstream_versions.mjs manifests/runtime-sources.json
 
+      - name: Detect runtime source changes
+        id: detect
+        run: |
+          if git diff --quiet --exit-code -- manifests/runtime-sources.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No runtime source changes detected; skipping publish."
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          git status --short -- manifests/runtime-sources.json manifests/upstream-status.json
+
       - name: Set release tag
+        if: steps.detect.outputs.changed == 'true'
         run: node scripts/set_release_tag.mjs manifests/runtime-sources.json
 
       - name: Build runtime assets
+        if: steps.detect.outputs.changed == 'true'
         run: node scripts/build_engine_assets.mjs manifests/runtime-sources.json --strict-fetch
 
       - name: Build manifests
+        if: steps.detect.outputs.changed == 'true'
         run: node scripts/build_runtime_index.mjs --channels stable,candidate
         env:
           FTSP_RUNTIME_SIGNING_PRIVATE_KEY_B64: ${{ secrets.FTSP_RUNTIME_SIGNING_PRIVATE_KEY_B64 }}
 
       - name: Validate manifests
+        if: steps.detect.outputs.changed == 'true'
         run: |
           node scripts/validate_manifest.mjs manifests/runtime-index.stable.json
           node scripts/validate_manifest.mjs manifests/runtime-index.candidate.json
 
       - name: License gate
+        if: steps.detect.outputs.changed == 'true'
         run: node scripts/license_gate.mjs manifests
 
       - name: Runtime smoke gate
+        if: steps.detect.outputs.changed == 'true'
         run: node scripts/runtime_smoke_gate.mjs
 
-      - name: Create PR with updates
-        id: cpr
-        uses: peter-evans/create-pull-request@v6
-        with:
-          branch: chore/runtime-registry-update
-          commit-message: "chore: update runtime registry assets and manifests"
-          title: "chore: runtime registry auto-update"
-          body: |
-            Automated update:
-            - upstream tag scan
-            - runtime assets refresh
-            - manifest rebuild (stable/candidate)
-            - validation + license/smoke gates
-          labels: |
-            runtime
-            automation
-
-      - name: Enable auto-merge
-        if: ${{ steps.cpr.outputs.pull-request-number }}
-        uses: peter-evans/enable-pull-request-automerge@v3
-        with:
-          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
-          merge-method: squash
+      - name: Commit and push runtime update
+        if: steps.detect.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A manifests engines uts39
+          if git diff --cached --quiet --exit-code; then
+            echo "No staged runtime changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: update runtime registry assets and manifests"
+          git push origin HEAD:main
