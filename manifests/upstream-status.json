@@ -1,4 +1,17 @@
 {
-  "checkedAt": "2026-03-03T03:35:08.699Z",
-  "updates": []
+  "checkedAt": "2026-03-16T05:24:59.055Z",
+  "updates": [
+    {
+      "kind": "engine:harfbuzz",
+      "current": "v0.4.13",
+      "latest": "v0.10.0",
+      "versionChanged": true
+    },
+    {
+      "kind": "engine:geometry",
+      "current": "chrome/m136",
+      "latest": "chrome/m39_2138",
+      "versionChanged": false
+    }
+  ]
 }

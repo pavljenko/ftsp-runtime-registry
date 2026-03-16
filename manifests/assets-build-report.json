@@ -1,10 +1,10 @@
 {
-  "builtAt": "2026-03-03T03:42:03.251Z",
+  "builtAt": "2026-03-16T05:24:59.605Z",
   "engines": {
     "harfbuzz": {
-      "file": "engines/harfbuzz/0.4.13/harfbuzz.wasm",
-      "bytes": 371910,
-      "source": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.4.13/hb.wasm",
+      "file": "engines/harfbuzz/0.10.0/harfbuzz.wasm",
+      "bytes": 381964,
+      "source": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.10.0/hb.wasm",
       "reused": false
     },
     "freetypeVm": {
@@ -22,7 +22,7 @@
   },
   "datasets": {
     "uts39": {
-      "file": "uts39/2026-03-03/confusables.json.gz",
+      "file": "uts39/2026-03-16/confusables.json.gz",
       "bytes": 45595,
       "source": "https://unicode.org/Public/security/latest/confusables.txt",
       "pairs": 4462,

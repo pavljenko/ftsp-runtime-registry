@@ -2,7 +2,7 @@
   "schema": "ftsp-runtime-sources-v2",
   "owner": "pavljenko",
   "repo": "ftsp-runtime-registry",
-  "releaseTag": "v2026.03.03.2",
+  "releaseTag": "v2026.03.16.14",
   "stableTag": "stable",
   "channel": "stable",
   "signing": {
@@ -11,9 +11,9 @@
   },
   "engines": {
     "harfbuzz": {
-      "version": "0.4.13",
+      "version": "0.10.0",
       "autoUpdateVersion": true,
-      "file": "engines/harfbuzz/0.4.13/harfbuzz.wasm",
+      "file": "engines/harfbuzz/0.10.0/harfbuzz.wasm",
       "assetName": "harfbuzz.wasm",
       "exports": [
         "shape"
@@ -21,13 +21,13 @@
       "license": "MIT",
       "source": {
         "type": "remote-url",
-        "url": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.4.13/hb.wasm"
+        "url": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.10.0/hb.wasm"
       },
       "upstream": {
         "repo": "https://github.com/harfbuzz/harfbuzzjs",
         "tag": "v0.4.13",
         "latestSeen": "v0.10.0",
-        "checkedAt": "2026-03-03T03:35:08.699Z"
+        "checkedAt": "2026-03-16T05:24:59.055Z"
       }
     },
     "freetypeVm": {
@@ -47,7 +47,7 @@
         "repo": "https://github.com/onepixeldev/freetype-wasm",
         "tag": "v0.0.4",
         "latestSeen": "v0.0.4",
-        "checkedAt": "2026-03-03T03:35:08.699Z"
+        "checkedAt": "2026-03-16T05:24:59.055Z"
       }
     },
     "geometry": {
@@ -66,15 +66,15 @@
       "upstream": {
         "repo": "https://github.com/google/skia",
         "tag": "chrome/m136",
-        "latestSeen": "chrome/m136",
-        "checkedAt": "2026-03-03T03:35:08.699Z"
+        "latestSeen": "chrome/m39_2138",
+        "checkedAt": "2026-03-16T05:24:59.055Z"
       }
     }
   },
   "datasets": {
     "uts39": {
-      "version": "2026-03-03",
-      "file": "uts39/2026-03-03/confusables.json.gz",
+      "version": "2026-03-16",
+      "file": "uts39/2026-03-16/confusables.json.gz",
       "assetName": "confusables.json.gz",
       "license": "Unicode-DFS-2016",
       "source": {
@@ -83,7 +83,7 @@
       },
       "upstream": {
         "repo": "https://www.unicode.org/reports/tr39/",
-        "checkedAt": "2026-03-03T03:35:08.699Z"
+        "checkedAt": "2026-03-16T05:24:59.055Z"
       }
     }
   }
