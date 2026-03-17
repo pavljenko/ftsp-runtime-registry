@@ -1,32 +1,34 @@
 {
-  "builtAt": "2026-03-03T03:42:03.251Z",
+  "schema": "ftsp-runtime-assets-report-v2",
   "engines": {
     "harfbuzz": {
-      "file": "engines/harfbuzz/0.4.13/harfbuzz.wasm",
-      "bytes": 371910,
-      "source": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.4.13/hb.wasm",
-      "reused": false
+      "file": "engines/harfbuzz/0.10.0/harfbuzz.wasm",
+      "bytes": 381964,
+      "source": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.10.0/hb.wasm",
+      "sha256": "d2ab975172d6103e7624e8f7f03fea2316eca6fe562e1b80fc7f7058b283a6d0"
     },
     "freetypeVm": {
       "file": "engines/freetype-vm/0.0.4/freetype_vm.wasm",
       "bytes": 998254,
       "source": "https://cdn.jsdelivr.net/npm/freetype-wasm@0.0.4/dist/freetype.wasm",
-      "reused": false
+      "sha256": "1e6716a486919142e3d0c25b0fe7b2f381d492fc4b98d690931d32dec41d1949"
     },
     "geometry": {
       "file": "engines/geometry/1.0.0/geometry.wasm",
       "bytes": 324290,
       "source": "https://cdn.jsdelivr.net/npm/pathkit-wasm@1.0.0/bin/pathkit.wasm",
-      "reused": false
+      "sha256": "1356ccfa6551147c57624184445923393933beec4a85eff4440bb7381a78cd34"
     }
   },
   "datasets": {
     "uts39": {
       "file": "uts39/2026-03-03/confusables.json.gz",
-      "bytes": 45595,
+      "bytes": 45705,
       "source": "https://unicode.org/Public/security/latest/confusables.txt",
-      "pairs": 4462,
-      "reused": false
+      "sourceSha256": "091c7f82fc39ef208faf8f94d29c244de99254675e09de163160c810d13ef22a",
+      "contentSha256": "746383d73b515dddc24396a41b961f6e550d5d7810da00c5d22f4ee2868b85b2",
+      "sha256": "4b2d82efc4851e4eb50c94f5fb5712d6a72b85e9b4b4d8e59c1bd6dcd9aa5ed9",
+      "pairs": 4462
     }
   }
 }

@@ -2,7 +2,7 @@
   "schema": "ftsp-runtime-sources-v2",
   "owner": "pavljenko",
   "repo": "ftsp-runtime-registry",
-  "releaseTag": "v2026.03.03.2",
+  "releaseTag": "v2026.03.17.15",
   "stableTag": "stable",
   "channel": "stable",
   "signing": {
@@ -11,9 +11,9 @@
   },
   "engines": {
     "harfbuzz": {
-      "version": "0.4.13",
+      "version": "0.10.0",
       "autoUpdateVersion": true,
-      "file": "engines/harfbuzz/0.4.13/harfbuzz.wasm",
+      "file": "engines/harfbuzz/0.10.0/harfbuzz.wasm",
       "assetName": "harfbuzz.wasm",
       "exports": [
         "shape"
@@ -21,13 +21,13 @@
       "license": "MIT",
       "source": {
         "type": "remote-url",
-        "url": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.4.13/hb.wasm"
+        "url": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.10.0/hb.wasm"
       },
       "upstream": {
         "repo": "https://github.com/harfbuzz/harfbuzzjs",
-        "tag": "v0.4.13",
+        "tag": "v0.10.0",
         "latestSeen": "v0.10.0",
-        "checkedAt": "2026-03-03T03:35:08.699Z"
+        "checkedAt": "2026-03-17T05:02:09.574Z"
       }
     },
     "freetypeVm": {
