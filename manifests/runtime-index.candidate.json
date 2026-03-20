@@ -1,32 +1,32 @@
 {
-  "version": "2026.03.17.15",
+  "version": "2026.03.20.18",
   "channel": "candidate",
-  "generatedAt": "2026-03-17T05:02:12.175Z",
+  "generatedAt": "2026-03-20T04:57:36.376Z",
   "signature": {
     "alg": "ed25519",
     "keyId": "ftsp_runtime_registry_ed25519_v1",
-    "value": "S8Hp1mTwirmbyXP89uRaT/s+Pl0pcbLlav0r5+CTNrr0zv8eh5Xl/JCZFDNoP0Q3EOeSjaIgsGfSniILoXxqBA==",
-    "signedPayloadSha256": "f07dad93746279862565b9b957d22f93141ec08e7c803b77a2f14b573c3af0d7"
+    "value": "M0SIdt+TTP+O5e+6mZAKo4QYDO5mvl8Yc+dVrrMohNHGkyt67cCuUxD9kvMkvX2G5fwvvz2Od2qxi7xHavCCCg==",
+    "signedPayloadSha256": "ba386c6f37072e96a68026850b9916b01560797fd55597f8fb4079cd04fb31a9"
   },
   "engines": {
     "harfbuzz": {
-      "version": "0.10.0",
-      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.17.15/harfbuzz.wasm",
-      "sha256": "d2ab975172d6103e7624e8f7f03fea2316eca6fe562e1b80fc7f7058b283a6d0",
+      "version": "0.10.1",
+      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.20.18/harfbuzz.wasm",
+      "sha256": "a71578ee0f2040de90003e47582f200a53d09a0ed82b9e1ae3cb3d159a2c0061",
       "exports": [
         "shape"
       ],
       "license": "MIT",
       "upstream": {
         "repo": "https://github.com/harfbuzz/harfbuzzjs",
-        "tag": "v0.10.0",
-        "latestSeen": "v0.10.0",
-        "checkedAt": "2026-03-17T05:02:09.574Z"
+        "tag": "v0.10.1",
+        "latestSeen": "v0.10.1",
+        "checkedAt": "2026-03-20T04:57:34.156Z"
       }
     },
     "freetypeVm": {
       "version": "0.0.4",
-      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.17.15/freetype_vm.wasm",
+      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.20.18/freetype_vm.wasm",
       "sha256": "1e6716a486919142e3d0c25b0fe7b2f381d492fc4b98d690931d32dec41d1949",
       "exports": [
         "run_vm"
@@ -41,7 +41,7 @@
     },
     "geometry": {
       "version": "1.0.0",
-      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.17.15/geometry.wasm",
+      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.20.18/geometry.wasm",
       "sha256": "1356ccfa6551147c57624184445923393933beec4a85eff4440bb7381a78cd34",
       "exports": [
         "analyze_geometry"
@@ -58,7 +58,7 @@
   "datasets": {
     "uts39": {
       "version": "2026-03-03",
-      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.17.15/confusables.json.gz",
+      "url": "https://github.com/pavljenko/ftsp-runtime-registry/releases/download/v2026.03.20.18/confusables.json.gz",
       "sha256": "4b2d82efc4851e4eb50c94f5fb5712d6a72b85e9b4b4d8e59c1bd6dcd9aa5ed9",
       "exports": [],
       "license": "Unicode-DFS-2016",
