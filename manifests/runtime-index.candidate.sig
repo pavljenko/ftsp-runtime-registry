@@ -2,8 +2,8 @@
   "alg": "ed25519",
   "keyId": "ftsp_runtime_registry_ed25519_v1",
   "manifest": "runtime-index.candidate.json",
-  "sha256": "ed0b13a0c01109da3697f3a90706b8618ea004a858b1d3a3ffecb87397a39cfd",
-  "signedPayloadSha256": "ba386c6f37072e96a68026850b9916b01560797fd55597f8fb4079cd04fb31a9",
-  "signature": "M0SIdt+TTP+O5e+6mZAKo4QYDO5mvl8Yc+dVrrMohNHGkyt67cCuUxD9kvMkvX2G5fwvvz2Od2qxi7xHavCCCg==",
-  "generatedAt": "2026-03-20T04:57:36.377Z"
+  "sha256": "6d972ecf0aebbac088dbe2c7ecad1b73aaa2fc794017c421f4aefdb198b863a6",
+  "signedPayloadSha256": "e609c04bdd11d82bd47643faa9aee51790f8f4097b4b070fa94e24551a1c5b5b",
+  "signature": "9l+JkX3Xe3YbfgTubIhAt333E6dz+TKMFViS9XwiZcdgg2vwQUqDoLNB2sDnX5ZHH8jpaX7ePWjEk5lkMIGsCw==",
+  "generatedAt": "2026-03-31T05:19:34.127Z"
 }

@@ -2,9 +2,9 @@
   "schema": "ftsp-runtime-assets-report-v2",
   "engines": {
     "harfbuzz": {
-      "file": "engines/harfbuzz/0.10.1/harfbuzz.wasm",
+      "file": "engines/harfbuzz/0.10.2/harfbuzz.wasm",
       "bytes": 378240,
-      "source": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.10.1/hb.wasm",
+      "source": "https://cdn.jsdelivr.net/npm/harfbuzzjs@0.10.2/hb.wasm",
       "sha256": "a71578ee0f2040de90003e47582f200a53d09a0ed82b9e1ae3cb3d159a2c0061"
     },
     "freetypeVm": {
