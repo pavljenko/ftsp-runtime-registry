@@ -1,5 +1,0 @@
-Engine: freetype-vm (freetype-wasm)
-Version: 0.0.4
-Upstream: https://github.com/onepixeldev/freetype-wasm
-License: FTL
-Source artifact: https://cdn.jsdelivr.net/npm/freetype-wasm@0.0.4/dist/freetype.wasm
