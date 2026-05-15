@@ -1,5 +1,0 @@
-Engine: geometry (pathkit-wasm)
-Version: 1.0.0
-Upstream: https://github.com/google/skia
-License: BSD-3-Clause
-Source artifact: https://cdn.jsdelivr.net/npm/pathkit-wasm@1.0.0/bin/pathkit.wasm
