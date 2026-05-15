@@ -1,4 +1,0 @@
-FreeType VM placeholder runtime artifact for FTSP wiring tests.
-Upstream project: https://github.com/freetype/freetype
-Declared license: FTL
-This placeholder file is not the real FreeType interpreter build.
