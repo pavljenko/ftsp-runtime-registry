@@ -1,5 +1,0 @@
-Engine: harfbuzz (harfbuzzjs)
-Version: 0.4.13
-Upstream: https://github.com/harfbuzz/harfbuzzjs
-License: MIT
-Source artifact: https://cdn.jsdelivr.net/npm/harfbuzzjs@0.4.13/hb.wasm
